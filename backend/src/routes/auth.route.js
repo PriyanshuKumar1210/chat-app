@@ -1,5 +1,6 @@
 import express from "express";
-import { login, signup ,logout} from "../controller/auth.controller.js";
+import { login, signup ,logout,updateProfile,checkAuth} from "../controller/auth.controller.js";
+import { protectRoute } from "../middleware/auth.middleware.js";
 
 const router = express.Router(); //creates a new router object that can be used to define routes separately from the main application.
 
@@ -24,5 +25,8 @@ router.post("/login",login);
 // logout route
 
 router.post("/logout",logout);
+
+router.put("/update-profile",protectRoute,updateProfile);
+router.get("/check",protectRoute,checkAuth);
 
 export default router;

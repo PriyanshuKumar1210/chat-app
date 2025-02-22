@@ -1,3 +1,4 @@
+import cloudinary from "../lib/cloudinary.js";
 import { generateToken } from "../lib/util.js";
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
@@ -54,7 +55,7 @@ export const signup = async (req,res)=>{
         console.log("Error in signup controller ",error.message);
         res.status(500).json("Internal server error");
     }
-}
+};
 //login function 
 export const login = async(req,res)=>{
     const  { email,password } = req.body;
@@ -76,18 +77,63 @@ export const login = async(req,res)=>{
         generateToken(user._id,res);
 
         res.status(200).json({
-            _id:newUser._id,
-            fullName:newUser.fullName,
-            email:newUser.email,
-            profilePic:newUser.profilePic,
+            _id:user._id,
+            fullName:user.fullName,
+            email:user.email,
+            profilePic:user.profilePic,
         })
     }
     catch(error){
         console.log("Error in login controller ",error.message);
         res.status(500).json("Internal server error");
     }
-}
+};
 
-export const logout = (req,res)=>{
-    
+export const logout = async(req,res)=>{
+    //clearing the cookies
+    try{
+        res.clearCookie("jwt","",{maxAge:0});
+        res.status(200).json("Logged Out Successfully");
+    }
+    catch(error){
+        console.log("Error in login controller ",error.message);
+        res.status(500).json("Internal server error");
+    }
+};
+
+//function to update the profile picture
+
+export const updateProfile = async(req,res)=>{
+
+    try{
+        const {profilePic} = req.body;
+    const userId = req.user._id;  //access the current user
+
+    if(!profilePic){
+        return res.status(400).json({msg:"Profile pic is required"});
+    }
+
+    const uploadResponse = await cloudinary.uploader.upload(profilePic); //upload profilepic on cloudinary
+//update the profile pic in the datbase
+    const updatedUser = await User.findByIdAndUpdate(userId,{profilePic:uploadResponse.secure_url},{new:true});
+
+    res.status(200).json(updatedUser);
+    }
+    catch(error){
+        console.log("Error in update profile controller ",error.message);
+        res.status(500).json("Internal server error");
+    }
+};
+
+// this function runs when i refresh the page & checks that user is authenticated
+//or not and depending on them we're going to them on profile page or login page
+
+export const checkAuth = (req,res) =>{
+    try{
+        res.status(200).json(req.user);
+    }
+    catch(error){
+        console.log("Error in check auth controller ",error.message);
+        res.status(500).json("Internal server error");
+    }
 }
