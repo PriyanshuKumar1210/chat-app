@@ -36,7 +36,7 @@ export const signup = async (req,res)=>{
 
         if(newUser){
             //generate jwt token here
-            generateToken(newUser.__id,res)
+            generateToken(newUser._id,res)
             await newUser.save()
 //sucess message
             res.status(201).json({
@@ -103,27 +103,32 @@ export const logout = async(req,res)=>{
 
 //function to update the profile picture
 
-export const updateProfile = async(req,res)=>{
-
-    try{
-        const {profilePic} = req.body;
-    const userId = req.user._id;  //access the current user
-
-    if(!profilePic){
-        return res.status(400).json({msg:"Profile pic is required"});
+export const updateProfile = async (req, res) => {
+    try {
+      const { profilePic } = req.body;
+      const userId = req.user._id;
+  
+      if (!profilePic) {
+        return res.status(400).json({ msg: "Profile pic is required" });
+      }
+  
+      const uploadResponse = await cloudinary.uploader.upload(profilePic, {
+        folder: "chatapp-profiles",
+      });
+  
+      const updatedUser = await User.findByIdAndUpdate(
+        userId,
+        { profilePic: uploadResponse.secure_url },
+        { new: true }
+      ).select("-password"); // Exclude password for security
+  
+      res.status(200).json(updatedUser);
+    } catch (error) {
+      console.error("Error in update profile controller:", error.message);
+      res.status(500).json({ msg: "Internal server error" });
     }
-
-    const uploadResponse = await cloudinary.uploader.upload(profilePic); //upload profilepic on cloudinary
-//update the profile pic in the datbase
-    const updatedUser = await User.findByIdAndUpdate(userId,{profilePic:uploadResponse.secure_url},{new:true});
-
-    res.status(200).json(updatedUser);
-    }
-    catch(error){
-        console.log("Error in update profile controller ",error.message);
-        res.status(500).json("Internal server error");
-    }
-};
+  };
+  
 
 // this function runs when i refresh the page & checks that user is authenticated
 //or not and depending on them we're going to them on profile page or login page

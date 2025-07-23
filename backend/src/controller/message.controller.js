@@ -1,6 +1,9 @@
 /**it's shows the users at the left side bar    */
 
 import User from "../models/user.model.js"
+import Message from "../models/message.model.js"
+import  cloudinary  from "../lib/cloudinary.js"
+import { getReceiverSocketId, io } from "../lib/socket.js"
 
 export const getUserForSideBar = async (req, res) => {
     try {
@@ -25,10 +28,10 @@ export const getMessages = async (req, res) => {
         const senderId = req.user._id;
 
         //fetch & access to the show all the messages 
-        const message = await MessageChannel.find({
+        const messages = await Message.find({
             $or: [
-                { senderId: MediaEncryptedEvent, receiverId: userToChatId },
-                { senderId: userToChatId, receiverId: senderId }
+                { senderID: senderId, receiverID: userToChatId },
+                { senderID: userToChatId, receiverID: senderId }
             ]
         });
 
@@ -59,14 +62,18 @@ export const sendMessage = async (req, res) => {
             imageUrl = uploadResponse.secure_url;
         }
         const newMessage = new Message({
-            senderId,
-            receiverId,
+            senderID: senderId,
+            receiverID: receiverId,
             text,
             image: imageUrl,
         });
         await newMessage.save();    //save the new message
 
-        // todo:realtime functionality goes here=>socket.io
+        // Real-time functionality with socket.io
+        const receiverSocketId = getReceiverSocketId(receiverId);
+        if (receiverSocketId) {
+            io.to(receiverSocketId).emit("newMessage", newMessage);
+        }
 
         res.status(200).json(newMessage);
     }

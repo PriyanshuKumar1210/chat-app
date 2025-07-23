@@ -3,6 +3,7 @@
 import {v2 as cloudinary} from "cloudinary"
 import {config} from 'dotenv'
 
+
 config() //acess .env variables
 
 cloudinary.config({
@@ -11,4 +12,4 @@ cloudinary.config({
     api_secret:process.env.CLOUDINARY_API_SECRET
 });
 
-export default cloudinary
+export default cloudinary;
